@@ -2,15 +2,20 @@ import dotenv from "dotenv";
 import express from "express";
 import generalRouter from "./routes/general.js";
 import productRouter from "./routes/product.js";
+import customersRouter from "./routes/customers.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(express.json());
+
 app.use("/", generalRouter);
 
 app.use("/products", productRouter);
+
+app.use("/cart", customersRouter);
 
 app.use((req, res, next) => {
     res.status(404).json({
