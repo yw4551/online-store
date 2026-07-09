@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import generalRouter from "./routes/general.js";
+import productRouter from "./routes/product.js";
 
 dotenv.config();
 
@@ -9,6 +10,8 @@ const PORT = process.env.PORT || 3000;
 
 app.use("/", generalRouter);
 
+app.use("/products", productRouter);
+
 app.use((req, res, next) => {
     res.status(404).json({
         success: false,
@@ -16,7 +19,7 @@ app.use((req, res, next) => {
     });
 });
 
-app.use((req, res, next) => {
+app.use((err, req, res, next) => {
     res.status(500).json({
         success: false,
         message: "Internal Server Error",
