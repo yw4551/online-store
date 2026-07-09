@@ -1,5 +1,5 @@
 import express from "express";
-
+import { getCustomerBalance } from "../controllers/customers-controller.js";
 const router = express.Router();
 
 router.get("/", (req, res) => {
@@ -15,5 +15,7 @@ router.get("/health", (req, res) => {
         message: "Server is healthy.",
     });
 });
+
+router.get("/account/balance", getCustomerBalance);
 
 export default router;

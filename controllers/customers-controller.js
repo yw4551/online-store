@@ -6,9 +6,8 @@ dotenv.config();
 
 export async function getCustomerCart(req, res, next) {
     try {
-        const customers = await helper.readFileContent(
-            `./${process.env.DB_BASE_PATH}/customers.json`,
-        );
+        const customerDbPath = `./${process.env.DB_BASE_PATH}/customers.json`;
+        const customers = await helper.readFileContent(customerDbPath);
         const customerQueryId = req.query.customerId;
         const customerCart = customers.find(
             (customer) => String(customer.customerId) === customerQueryId,
@@ -125,6 +124,29 @@ export async function deleteProduct(req, res, next) {
         res.json({
             success: true,
             message: "Product deleted successfully.",
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function getCustomerBalance(req, res, next) {
+    try {
+        const customerDbPath = `./${process.env.DB_BASE_PATH}/customers.json`;
+        const customers = await helper.readFileContent(customerDbPath);
+        const customerQueryId = req.query.customerId;
+        const customerIndex = customers.findIndex(
+            (cus) => cus.customerId === customerQueryId,
+        );
+
+        if (customerIndex === -1) {
+            return helper.isFalse("Customer not found", res, 404);
+        }
+
+        res.json({
+            success: true,
+            message: "Customer balance shown successfully",
+            body: customers[customerIndex].balance,
         });
     } catch (error) {
         next(error);
