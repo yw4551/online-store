@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1,
+        "name": "Laptop",
+        "price": 1900,
+        "stock": 23
+    },
+    {
+        "id": 2,
+        "name": "Phone",
+        "price": 3745,
+        "stock": 35
+    },
+    {
+        "id": 3,
+        "name": "Phone charger",
+        "price": 45,
+        "stock": 76
+    },
+    {
+        "id": 4,
+        "name": "Phone case",
+        "price": 100,
+        "stock": 21
+    },
+    {
+        "id": 5,
+        "name": "USB cable",
+        "price": 20,
+        "stock": 10
+    }
+]
