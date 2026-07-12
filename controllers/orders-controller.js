@@ -19,7 +19,6 @@ export async function runCheckout(req, res, next) {
         const customerIndex = customers.findIndex(
             (cus) => cus.customerId === customerId,
         );
-        const customerCart = customers[customerIndex].cart;
 
         if (customerCart === -1) {
             return helper.isFalse("Customer not found", res, 404);
@@ -36,7 +35,7 @@ export async function runCheckout(req, res, next) {
         for (const product of customerCart) {
             const productId = product.productId;
             const productIndex = products.findIndex(
-                (fro) => pro.id === productId,
+                (pro) => pro.id === productId,
             );
 
             if (productIndex === -1) {
@@ -67,7 +66,7 @@ export async function runCheckout(req, res, next) {
         for (const product of customerCart) {
             const productId = product.productId;
             const productIndex = products.findIndex(
-                (fro) => pro.id === productId,
+                (pro) => pro.id === productId,
             );
             products[productIndex].stock -= product.quantity;
             itemsList.push(products[productIndex].name);
@@ -95,10 +94,37 @@ export async function runCheckout(req, res, next) {
 
         await helper.writeToFile(orderDbPath, orders);
 
-        res.status(200).json({
+        res.status(201).json({
             success: true,
             message: "Order created successfully",
             body: order,
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function getCustomerOrderHistory(req, res, next) {
+    try {
+        const orderDbPath = `./${process.env.DB_BASE_PATH}/orders.json`;
+        const orders = await helper.readFileContent(orderDbPath);
+        const customerQueryId = req.query.customerId;
+        const customerHistory = [];
+
+        if (!customerQueryId) {
+            helper.isFalse("Customer not found", res, 404);
+        }
+
+        for (const order of orders) {
+            if (order.customerId === customerQueryId) {
+                customerHistory.push(order);
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Here is the customer's order history",
+            body: customerHistory,
         });
     } catch (error) {
         next(error);
