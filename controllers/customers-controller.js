@@ -65,14 +65,6 @@ export async function addProductToCart(req, res, next) {
             return helper.isFalse("quantity must be positive", res, 400);
         }
 
-        if (product.stock < quantity) {
-            return helper.isFalse(
-                "We are low in stock of this product",
-                res,
-                400,
-            );
-        }
-
         const customerProductIndex = customers[customerIndex].cart.findIndex(
             (pro) => pro.productId === productId,
         );

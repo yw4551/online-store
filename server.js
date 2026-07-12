@@ -3,6 +3,7 @@ import express from "express";
 import generalRouter from "./routes/general.js";
 import productRouter from "./routes/product.js";
 import customersRouter from "./routes/customers.js";
+import orderRouter from "./routes/orders.js";
 
 dotenv.config();
 
@@ -16,6 +17,8 @@ app.use("/", generalRouter);
 app.use("/products", productRouter);
 
 app.use("/cart", customersRouter);
+
+app.use("/orders", orderRouter);
 
 app.use((req, res, next) => {
     res.status(404).json({

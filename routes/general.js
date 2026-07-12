@@ -1,5 +1,6 @@
 import express from "express";
 import { getCustomerBalance } from "../controllers/customers-controller.js";
+
 const router = express.Router();
 
 router.get("/", (req, res) => {
