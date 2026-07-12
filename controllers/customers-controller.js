@@ -6,28 +6,27 @@ dotenv.config();
 
 export async function getCustomerCart(req, res, next) {
     try {
+        const customerQueryId = req.query.customerId;
+
+        if (!customerQueryId) {
+            return helper.isFalse("Customer is required", res, 400);
+        }
+
         const customerDbPath = `./${process.env.DB_BASE_PATH}/customers.json`;
         const customers = await helper.readFileContent(customerDbPath);
-        const customerQueryId = req.query.customerId;
-        const customerCart = customers.find(
-            (customer) => String(customer.customerId) === customerQueryId,
+        const customerIndex = await helper.getOrCreateCustomer(
+            customers,
+            customerQueryId,
         );
 
-        if (!customerCart) {
-            return helper.isFalse("Customer not found", res, 404);
-        }
+        await helper.writeToFile(customerDbPath, customers);
 
-        if (customerCart.cart.length === 0) {
-            return res.status(404).json({
-                success: true,
-                error: "Cart is empty",
-            });
-        }
+        const customerCart = customers[customerIndex].cart;
 
         return res.json({
             success: true,
             message: "Here is your cart",
-            body: customerCart.cart,
+            data: customerCart,
         });
     } catch (error) {
         next(error);
@@ -36,19 +35,7 @@ export async function getCustomerCart(req, res, next) {
 
 export async function addProductToCart(req, res, next) {
     try {
-        const customerDbPath = `./${process.env.DB_BASE_PATH}/customers.json`;
-        const customers = await helper.readFileContent(customerDbPath);
-        const productsDbPath = `./${process.env.DB_BASE_PATH}/products.json`;
-        const products = await helper.readFileContent(productsDbPath);
         const { customerId, productId, quantity } = req.body;
-        const product = products.find((pro) => pro.id === productId);
-        const customerIndex = customers.findIndex(
-            (cus) => cus.customerId === customerId,
-        );
-
-        if (!product) {
-            return helper.isFalse("product not found", res, 404);
-        }
 
         if (!customerId) {
             return helper.isFalse("customerId is required", res, 400);
@@ -57,17 +44,40 @@ export async function addProductToCart(req, res, next) {
         if (!productId) {
             return helper.isFalse("productId is required", res, 400);
         }
+
         if (!quantity) {
             return helper.isFalse("quantity is required", res, 400);
         }
 
-        if (quantity <= 0) {
-            return helper.isFalse("quantity must be positive", res, 400);
+        const customerDbPath = `./${process.env.DB_BASE_PATH}/customers.json`;
+        const productsDbPath = `./${process.env.DB_BASE_PATH}/products.json`;
+        const customers = await helper.readFileContent(customerDbPath);
+        const products = await helper.readFileContent(productsDbPath);
+        const product = products.find((pro) => pro.id === productId);
+
+        if (!product) {
+            return helper.isFalse("product not found", res, 404);
         }
+
+        const customerIndex = await helper.getOrCreateCustomer(
+            customers,
+            customerId,
+        );
 
         const customerProductIndex = customers[customerIndex].cart.findIndex(
             (pro) => pro.productId === productId,
         );
+
+        let requestedQuantity = quantity;
+
+        if (customerProductIndex !== -1) {
+            requestedQuantity +=
+                customers[customerIndex].cart[customerProductIndex].quantity;
+        }
+
+        if (product.stock < requestedQuantity) {
+            return helper.isFalse("Not enough in stock", res, 400);
+        }
 
         if (customerProductIndex !== -1) {
             customers[customerIndex].cart[customerProductIndex].quantity +=
@@ -76,11 +86,12 @@ export async function addProductToCart(req, res, next) {
             customers[customerIndex].cart.push({ productId, quantity });
         }
 
-        helper.writeToFile(customerDbPath, customers);
+        await helper.writeToFile(customerDbPath, customers);
 
         res.json({
             success: true,
             message: "Product added to cart successfully",
+            data: {},
         });
     } catch (error) {
         next(error);
@@ -89,8 +100,6 @@ export async function addProductToCart(req, res, next) {
 
 export async function deleteProduct(req, res, next) {
     try {
-        const customerDbPath = `./${process.env.DB_BASE_PATH}/customers.json`;
-        const customers = await helper.readFileContent(customerDbPath);
         const customerId = req.body.customerId;
         const productId = Number(req.params.productId);
 
@@ -98,9 +107,16 @@ export async function deleteProduct(req, res, next) {
             return helper.isFalse("customerId is required", res, 400);
         }
 
+        const customerDbPath = `./${process.env.DB_BASE_PATH}/customers.json`;
+        const customers = await helper.readFileContent(customerDbPath);
         const customerIndex = customers.findIndex(
-            (cus) => cus.customerId === customerId,
+            (cus) => String(cus.customerId) === String(customerId),
         );
+
+        if (customerIndex === -1) {
+            return helper.isFalse("Customer not found", res, 404);
+        }
+
         const productIndex = customers[customerIndex].cart.findIndex(
             (pro) => pro.productId === productId,
         );
@@ -116,6 +132,7 @@ export async function deleteProduct(req, res, next) {
         res.json({
             success: true,
             message: "Product deleted successfully.",
+            data: {},
         });
     } catch (error) {
         next(error);
@@ -124,21 +141,25 @@ export async function deleteProduct(req, res, next) {
 
 export async function getCustomerBalance(req, res, next) {
     try {
+        const customerQueryId = req.query.customerId;
+
+        if (!customerQueryId) {
+            return helper.isFalse("customerId is required", res, 400);
+        }
+
         const customerDbPath = `./${process.env.DB_BASE_PATH}/customers.json`;
         const customers = await helper.readFileContent(customerDbPath);
-        const customerQueryId = req.query.customerId;
-        const customerIndex = customers.findIndex(
-            (cus) => cus.customerId === customerQueryId,
+        const customerIndex = await helper.getOrCreateCustomer(
+            customers,
+            customerQueryId,
         );
 
-        if (customerIndex === -1) {
-            return helper.isFalse("Customer not found", res, 404);
-        }
+        await helper.writeToFile(customerDbPath, customers);
 
         res.json({
             success: true,
             message: "Customer balance shown successfully",
-            body: customers[customerIndex].balance,
+            data: customers[customerIndex].balance,
         });
     } catch (error) {
         next(error);

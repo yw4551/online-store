@@ -33,7 +33,7 @@ export async function getAllProductsWithFilters(req, res, next) {
         res.json({
             success: true,
             message: "Here are the products that are find",
-            body: productsList,
+            data: productsList,
         });
     } catch (error) {
         next(error);

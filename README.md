@@ -1,117 +1,132 @@
-# Express Online Store API
+# Online Store - Express Backend Server
 
-Welcome to the Express Online Store API. This is a lightweight backend built with Express.js that simulates an e-commerce platform. It handles product filtering, shopping cart management, and a complete checkout flow, using local JSON files for data storage.
+A backend server simulating an online store. The project is built with Node.js and Express, using JSON files as a database to store data about products, customers, and orders.
 
-## Features
+## Key Features
 
-- **Product Catalog:** Browse and filter products by stock availability, maximum price, or text search.
-- **Shopping Cart:** Easily add or remove items for a specific customer.
-- **Secure Checkout:** Validates inventory and customer funds before finalizing an order.
-- **Frictionless Onboarding:** No registration required. Providing a new `customerId` automatically sets up an account with a starting balance.
-- **Local Storage:** All data is stored securely in local JSON files.
-- **Configuration:** Manage ports, database paths, and starting balances using a `.env` file.
+- **Product Management**: Fetch products with advanced filtering options (by available stock, maximum price, and free text search).
+- **Customers & Cart Management**:
+    - Automatic creation of new customers upon first request, including an initial balance.
+    - Add products to the cart with stock availability validation.
+    - Remove products from the cart.
+    - View customer balance.
+- **Checkout and Orders**:
+    - Cart validation (ensure it is not empty).
+    - Final stock and balance checks before charging.
+    - Generate a new order and update the database (reduce stock and deduct from customer balance).
+    - View customer order history.
 
-## Tech Stack
-
-- **Runtime:** Node.js
-- **Framework:** Express.js
-- **Database:** Local JSON files
-
-## Project Structure
-
-Here is an overview of the file system and folder structure for this project, featuring a modular routing setup:
+## Folder Structure
 
 ```text
-├── db/                     # Directory for local JSON database files
-│   ├── products.json       # Pre-defined list of products
-│   ├── customers.json      # Stores customer data and carts
-│   └── orders.json         # Stores order history
-├── routes/                 # Express routers for modular routing
-│   ├── products.js         # Routes for product catalog and filtering
-│   ├── cart.js             # Routes for shopping cart management
-│   └── orders.js           # Routes for checking balances and checkout
-├── .env                    # Environment variables (ignored by Git)
-├── .env.example            # Example configuration file
-├── server.js               # Main application entry point and middleware setup
-├── package.json            # Project metadata and dependencies
-└── README.md               # Project documentation
+online-store/
+├── controllers/
+│   ├── customers-controller.js
+│   ├── orders-controller.js
+│   └── products-controller.js
+├── routes/
+│   ├── customers.js
+│   ├── general.js
+│   ├── orders.js
+│   └── product.js
+├── db/
+│   ├── customers.json
+│   ├── orders.json
+│   └── products.json
+├── .env
+├── .env.example
+├── .gitignore
+├── helper.js
+├── package.json
+├── README.md
+└── server.js
 ```
 
-## Getting Started
+## Installation and Setup
 
-Ensure you have Node.js and npm installed on your machine.
+1. **Clone the repository**:
 
-### Installation
-
-1. Clone the repository:
     ```bash
-    git clone https://github.com/yw4551/online-store.git
+    git clone [https://github.com/yw4551/online-store.git](https://github.com/yw4551/online-store.git)
+    cd online-store
     ```
-2. Navigate to the project directory:
-    ```bash
-    cd your-repo-name
-    ```
-3. Install dependencies:
+
+2. **Install dependencies**:
+
     ```bash
     npm install
     ```
-4. Set up your environment variables by copying the example file:
-    ```bash
-    cp .env.example .env
+
+3. **Environment Variables (.env)**:
+   Create a file named `.env` in the root directory of the project and define the following variables:
+
+    ```env
+    PORT=3000
+    DB_BASE_PATH=./db
+    STARTING_BALANCE=500
     ```
 
-## Environment Variables
+4. **Database Preparation**:
+   Ensure there is a directory named `db` containing the following files:
+    - `products.json`
+    - `customers.json`
+    - `orders.json`
 
-The project relies on a `.env` file for configuration. Do not commit this file to version control.
+5. **Run the server**:
+    ```bash
+    npm start
+    ```
 
-```env
-PORT=3000
-DB_BASE_PATH=./db
-STARTING_BALANCE=500
+## API Routes
+
+### General
+
+| Method | Route     | Description                                      |
+| ------ | --------- | ------------------------------------------------ |
+| `GET`  | `/`       | Welcome message confirming the server is running |
+| `GET`  | `/health` | Server health check                              |
+
+### Products
+
+| Method | Route       | Description            | Possible Query Params                        |
+| ------ | ----------- | ---------------------- | -------------------------------------------- |
+| `GET`  | `/products` | Fetch list of products | `inStock=true`, `maxPrice=50`, `search=name` |
+
+### Customers & Cart
+
+| Method   | Route                    | Description                 | Required Parameters                                                |
+| -------- | ------------------------ | --------------------------- | ------------------------------------------------------------------ |
+| `GET`    | `/cart`                  | View shopping cart          | `?customerId=xxx` (Query)                                          |
+| `POST`   | `/cart/items`            | Add product to cart         | `{ "customerId": "x", "productId": 1, "quantity": 2 }` (Body JSON) |
+| `DELETE` | `/cart/items/:productId` | Remove product from cart    | `{ "customerId": "x" }` (Body JSON) + `:productId` in URL          |
+| `GET`    | `/account/balance`       | View customer money balance | `?customerId=xxx` (Query)                                          |
+
+### Orders
+
+| Method | Route              | Description                                | Required Parameters                   |
+| ------ | ------------------ | ------------------------------------------ | ------------------------------------- |
+| `POST` | `/orders/checkout` | Process payment and create order from cart | `{ "customerId": "xxx" }` (Body JSON) |
+| `GET`  | `/orders`          | View customer order history                | `?customerId=xxx` (Query)             |
+
+## Response Structure
+
+The API returns responses in a uniform JSON format:
+
+**Success (200/201):**
+
+```json
+{
+    "success": true,
+    "data": {}
+}
 ```
 
-## API Endpoints
+**Error (400/404/500):**
 
-### General Routes
-
-| Method | Endpoint  | Description                      |
-| :----- | :-------- | :------------------------------- |
-| `GET`  | `/`       | Returns a brief welcome message. |
-| `GET`  | `/health` | Server health status check.      |
-
-### Products (`/routes/products.js`)
-
-| Method | Endpoint    | Query Parameters (Optional)                                     | Description                                              |
-| :----- | :---------- | :-------------------------------------------------------------- | :------------------------------------------------------- |
-| `GET`  | `/products` | `inStock` (boolean)<br>`maxPrice` (number)<br>`search` (string) | Retrieves the product list. Supports combined filtering. |
-
-### Shopping Cart (`/routes/cart.js`)
-
-| Method   | Endpoint                 | Requirements                                                                              | Description                                                   |
-| :------- | :----------------------- | :---------------------------------------------------------------------------------------- | :------------------------------------------------------------ |
-| `GET`    | `/cart`                  | **Query Param:** `customerId` (Required)                                                  | Retrieves the specified customer's shopping cart.             |
-| `POST`   | `/cart/items`            | **Body (JSON):**<br>`{ "customerId": "string", "productId": number, "quantity": number }` | Adds a specific quantity of a product to the customer's cart. |
-| `DELETE` | `/cart/items/:productId` | **Route Param:** `productId`<br>**Body (JSON):** `{ "customerId": "string" }`             | Removes the specified product from the customer's cart.       |
-
-### Account & Orders (`/routes/orders.js`)
-
-| Method | Endpoint           | Requirements                                     | Description                                                      |
-| :----- | :----------------- | :----------------------------------------------- | :--------------------------------------------------------------- |
-| `GET`  | `/account/balance` | **Query Param:** `customerId` (Required)         | Retrieves the customer's current financial balance.              |
-| `POST` | `/orders/checkout` | **Body (JSON):**<br>`{ "customerId": "string" }` | Validates cart, stock, and balance, then processes the checkout. |
-| `GET`  | `/orders`          | **Query Param:** `customerId` (Required)         | Retrieves the complete order history for the specified customer. |
-
-## Business Logic
-
-- **Customer Identification:** All requests requiring user context must include a `customerId`.
-- **Automatic Account Creation:** Unrecognized customer IDs are automatically registered and granted the starting balance defined in `.env`.
-- **Inventory Management:** Stock levels are only reduced upon a successful checkout, not when items are placed in the cart.
-- **Checkout Validation:** Orders are only processed if the cart contains items, there is sufficient inventory, and the customer has enough funds.
-
-## Running the Server
-
-To start the server in development mode, run:
-
-```bash
-npm run dev
+```json
+{
+    "success": false,
+    "message": "Error description here",
+    "data": {}
+}
 ```

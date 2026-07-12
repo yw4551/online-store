@@ -20,7 +20,7 @@ export async function runCheckout(req, res, next) {
             (cus) => cus.customerId === customerId,
         );
 
-        if (customerCart === -1) {
+        if (customerIndex === -1) {
             return helper.isFalse("Customer not found", res, 404);
         }
 
@@ -97,7 +97,7 @@ export async function runCheckout(req, res, next) {
         res.status(201).json({
             success: true,
             message: "Order created successfully",
-            body: order,
+            data: order,
         });
     } catch (error) {
         next(error);
@@ -112,7 +112,7 @@ export async function getCustomerOrderHistory(req, res, next) {
         const customerHistory = [];
 
         if (!customerQueryId) {
-            helper.isFalse("Customer not found", res, 404);
+            return helper.isFalse("Customer is required", res, 400);
         }
 
         for (const order of orders) {
@@ -124,7 +124,7 @@ export async function getCustomerOrderHistory(req, res, next) {
         res.status(200).json({
             success: true,
             message: "Here is the customer's order history",
-            body: customerHistory,
+            data: customerHistory,
         });
     } catch (error) {
         next(error);

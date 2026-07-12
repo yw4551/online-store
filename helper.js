@@ -13,6 +13,26 @@ export async function writeToFile(filePath, data) {
 export function isFalse(err, res, status) {
     res.status(status).json({
         success: false,
-        error: err,
+        message: err,
     });
+}
+
+export async function getOrCreateCustomer(customers, customerId) {
+    let customerIndex = customers.findIndex(
+        (cus) => String(cus.customerId) === String(customerId),
+    );
+
+    if (customerIndex === -1) {
+        const newCustomer = {
+            customerId: customerId,
+            balance: Number(process.env.STARTING_BALANCE),
+            cart: [],
+            createdAt: Date.now(),
+        };
+
+        customers.push(newCustomer);
+        customerIndex = customers.length - 1;
+    }
+
+    return customerIndex;
 }
